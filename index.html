@@ -87,6 +87,15 @@ found.forEach(n=>{const box=document.createElement("article");box.className="not
 }
 $("form").addEventListener("submit",e=>{e.preventDefault();const title=$("title").value.trim();if(!title)return;notes.push({id:Date.now().toString(),title,details:$("details").value.trim(),category:$("category").value,created:Date.now()});if(persist()){e.target.reset();filter="Todas";render()}});
 $("search").addEventListener("input",render);
+  $("search").addEventListener("keydown",e=>{
+if(e.key!=="Enter")return;
+e.preventDefault();
+const q=$("search").value.trim().toLocaleLowerCase("es");
+if(!q)return;
+const palabras=q.split(/[^\p{L}\p{N}]+/u).filter(w=>w.length>2&&!["que","qué","como","cómo","dije","tenia","tenía","hacer","tengo","para","sobre","mis","notas","recordar","recuerdo","dime"].includes(w));
+const resultados=notes.filter(n=>palabras.length===0||palabras.some(w=>(n.title+" "+(n.details||"")+" "+n.category).toLocaleLowerCase("es").includes(w)));
+alert(resultados.length?"Esto encontré en tus recuerdos:\n\n"+resultados.slice(0,5).map(n=>"• "+n.title+(n.details?" — "+n.details:"")).join("\n"):"No encontré una nota que coincida. Prueba con una palabra que recuerdes.");
+});
 render();
 </script>
 </body>
