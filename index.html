@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#fff7fb">
+<title>Wemi — Piensa contigo para que no lo olvides</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#fff8fc;color:#45364e;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:650px;margin:auto;padding:28px 18px 50px}
+header{text-align:center;padding:16px 0 26px}
+.brain{width:112px;height:112px;margin:auto auto 12px;border-radius:38px;background:linear-gradient(145deg,#ffe0ef,#e8d9ff);display:grid;place-items:center;font-size:65px;box-shadow:0 8px 24px #dca8d833}
+h1{font-size:42px;color:#b56b9e;margin:4px 0}
+header p{font-size:17px;margin:8px 0;color:#79677f}
+.card{background:white;border:1px solid #f0dfed;border-radius:22px;padding:20px;margin:15px 0;box-shadow:0 5px 22px #76516c0c}
+h2{font-size:20px;margin:0 0 16px}
+label{display:block;font-size:14px;font-weight:600;margin:13px 0 7px}
+input,textarea,select{width:100%;padding:13px;border:1px solid #e8d9e9;border-radius:13px;font:inherit;color:#45364e;background:#fff}
+textarea{min-height:100px;resize:vertical}
+button{font:inherit;font-weight:600;border:0;border-radius:13px;padding:12px 16px;cursor:pointer}
+.primary{width:100%;background:#bd83c8;color:white;margin-top:15px}
+.categories{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.chip{background:#f7eafa;color:#805c8d}
+.chip.active{background:#bd83c8;color:white}
+.note{border:1px solid #f0dfed;border-radius:15px;padding:14px;margin:10px 0;background:#fff}
+.notehead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tag{font-size:12px;background:#fceaf4;border-radius:20px;padding:5px 9px}
+.note p{white-space:pre-wrap;overflow-wrap:anywhere}
+.small{font-size:12px;color:#8a7a8e}
+.remove{font-size:12px;background:#fff0f0;color:#a33;padding:7px 10px}
+.empty{text-align:center;color:#96869a;padding:18px 4px}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="brain" aria-label="Cerebro rosado">🧠</div>
+<h1>Wemi</h1>
+<p>Piensa contigo para que no lo olvides 💭</p>
+</header>
+
+<section class="card">
+<h2>💗 ¿Qué quieres recordar hoy?</h2>
+<form id="form">
+<label for="title">Escribe aquí tu recuerdo</label>
+<input id="title" placeholder="Ej. Tengo que comprar leche" maxlength="150" required>
+<label for="details">Más detalles (opcional)</label>
+<textarea id="details" placeholder="Cuéntame un poquito más para que no lo olvides..."></textarea>
+<label for="category">Categoría</label>
+<select id="category">
+<option>Mis ideas</option>
+<option>Familia</option>
+<option>Trabajo</option>
+<option>Salud</option>
+</select>
+<button class="primary" type="submit">💗 Guardar nota</button>
+</form>
+</section>
+
+<section class="card">
+<h2>🔎 Pregúntale a Wemi sobre tus notas</h2>
+<input id="search" placeholder="¿Qué te dije que tenía que hacer?">
+<div class="categories" id="categories"></div>
+<div id="notes"></div>
+</section>
+<p class="small">Tus recuerdos se guardan en este navegador. Esta versión inicial no sincroniza notas entre dispositivos ni genera recordatorios automáticos.</p>
+</main>
+
+<script>
+const KEY="wemi_notes_v1";
+let notes=[];
+let filter="Todas";
+try{notes=JSON.parse(localStorage.getItem(KEY)||"[]");if(!Array.isArray(notes))notes=[]}catch(e){notes=[]}
+const $=id=>document.getElementById(id);
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(notes));return true}catch(e){alert("No se pudo guardar en este navegador.");return false}}
+function render(){
+const cats=["Todas",...new Set(notes.map(n=>n.category))];
+if(!cats.includes(filter))filter="Todas";
+$("categories").replaceChildren();
+cats.forEach(c=>{const b=document.createElement("button");b.className="chip"+(filter===c?" active":"");b.textContent=c;b.onclick=()=>{filter=c;render()};$("categories").appendChild(b)});
+const q=$("search").value.trim().toLocaleLowerCase("es");
+const found=notes.filter(n=>(filter==="Todas"||n.category===filter)&&[n.title,n.details,n.category].join(" ").toLocaleLowerCase("es").includes(q)).sort((a,b)=>b.created-a.created);
+$("notes").replaceChildren();
+if(!found.length){const p=document.createElement("p");p.className="empty";p.textContent=notes.length?"No encontré esa nota. Prueba con otra palabra.":"Todavía no hay notas aquí. ¡Escribe la primera y Wemi la recordará por ti! 💗";$("notes").appendChild(p);return}
+found.forEach(n=>{const box=document.createElement("article");box.className="note";const head=document.createElement("div");head.className="notehead";const tag=document.createElement("span");tag.className="tag";tag.textContent=n.category;const del=document.createElement("button");del.className="remove";del.textContent="Eliminar";del.onclick=()=>{if(confirm("¿Eliminar esta nota?")){notes=notes.filter(x=>x.id!==n.id);if(persist())render()}};head.append(tag,del);const h=document.createElement("h3");h.textContent=n.title;const p=document.createElement("p");p.textContent=n.details;const d=document.createElement("div");d.className="small";d.textContent=new Date(n.created).toLocaleString("es-US");box.append(head,h,p,d);$("notes").appendChild(box)})
+}
+$("form").addEventListener("submit",e=>{e.preventDefault();const title=$("title").value.trim();if(!title)return;notes.push({id:Date.now().toString(),title,details:$("details").value.trim(),category:$("category").value,created:Date.now()});if(persist()){e.target.reset();filter="Todas";render()}});
+$("search").addEventListener("input",render);
+render();
+</script>
+</body>
+</html>
