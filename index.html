@@ -43,6 +43,7 @@ button{font:inherit;font-weight:600;border:0;border-radius:13px;padding:12px 16p
 <section class="card">
 <h2>💗 ¿Qué quieres recordar hoy?</h2>
 <form id="form">
+  
 <label for="title">Escribe aquí tu recuerdo</label>
 <input id="title" placeholder="Ej. Tengo que comprar leche" maxlength="150" required>
 <label for="details">Más detalles (opcional)</label>
@@ -57,6 +58,7 @@ button{font:inherit;font-weight:600;border:0;border-radius:13px;padding:12px 16p
 <button class="primary" type="submit">💗 Guardar nota</button>
 </form>
 </section>
+<button type="button" onclick="probarNotificaciones()">🔔 Probar notificaciones</button>
 
 <section class="card">
 <h2>🔎 Pregúntale a Wemi sobre tus notas</h2>
@@ -97,6 +99,22 @@ const resultados=notes.filter(n=>palabras.length===0||palabras.some(w=>(n.title+
 alert(resultados.length?"Esto encontré en tus recuerdos:\n\n"+resultados.slice(0,5).map(n=>"• "+n.title+(n.details?" — "+n.details:"")).join("\n"):"No encontré una nota que coincida. Prueba con una palabra que recuerdes.");
 });
 render();
+function probarNotificaciones() {
+  if (!("Notification" in window)) {
+    alert("Este navegador no admite notificaciones web.");
+    return;
+  }
+
+  Notification.requestPermission().then(function (permiso) {
+    if (permiso === "granted") {
+      new Notification("Wemi 💜", {
+        body: "¡Las notificaciones están funcionando!"
+      });
+    } else {
+      alert("No se concedió permiso para las notificaciones.");
+    }
+  });
+}
 </script>
 </body>
 </html>
